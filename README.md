@@ -4,5 +4,6 @@ This is a distributed consensus algorithm based on the [extended Raft paper](htt
 
 To run the tests:
 ```
-go test -run 2
+cd src
+go test
 ```

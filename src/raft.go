@@ -53,7 +53,6 @@ type Raft struct {
 	log         []LogEntry
 	matchIndex  []int
 	nextIndex   []int
-	replyCond   *sync.Cond
 	replyCount  map[int]int
 
 	// Election state
@@ -90,7 +89,6 @@ func (rf *Raft) setTerm(term int) int {
 	if term > rf.currentTerm {
 		rf.currentTerm = term
 		rf.electionState = follower
-		rf.replyCond.Broadcast()
 		rf.votedFor = -1
 		rf.persist()
 	}
@@ -131,8 +129,6 @@ func (rf *Raft) Start(command interface{}) (int, int, bool) {
 		rf.log = append(rf.log, newEntry)
 		rf.nextIndex[rf.me] = len(rf.log)
 		rf.persist()
-		DPrintf("********** CLIENT ********** requested command %d to %d on term %d at index %d", command, rf.me, term, index)
-		//DPrintf("%d's log %+v", rf.me, rf.log)
 		rf.startLogConsensus(index, term)
 	}
 
@@ -143,7 +139,6 @@ func (rf *Raft) systemTick() {
 	for !rf.killed() {
 		time.Sleep(50 * time.Millisecond)
 		rf.mu.Lock()
-		//DPrintf("tick")
 		rf.timer.Broadcast()
 		rf.mu.Unlock()
 	}
@@ -198,7 +193,6 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.matchIndex = make([]int, len(peers))
 	rf.nextIndex = make([]int, len(peers))
 	rf.receivedHeartbeat = false
-	rf.replyCond = sync.NewCond(&rf.mu)
 	rf.replyCount = make(map[int]int)
 	rf.requiredReplies = int((math.Ceil(float64(len(rf.peers)) / 2)))
 	rf.timer = sync.NewCond(&rf.mu)

@@ -1,7 +1,5 @@
 package raft
 
-//import "time"
-
 func (rf *Raft) attemptAppendEntries(id int, index int, args *AppendEntriesArgs) {
 	if rf.killed() || rf.electionState != leader {
 		return
@@ -32,7 +30,6 @@ func (rf *Raft) attemptAppendEntries(id int, index int, args *AppendEntriesArgs)
 		}
 	} else {
 		isTermInLog, lastValidIndex := rf.termInLog(reply.XTerm)
-		//DPrintf("term %d in log: %t, last valid index %d", reply.XTerm, isTermInLog, lastValidIndex)
 		if reply.XTerm == -1 && reply.XIndex != -1 {
 			if reply.XIndex < rf.nextIndex[id] && reply.Term >= args.Term {
 				rf.nextIndex[id] = reply.XIndex
@@ -42,9 +39,6 @@ func (rf *Raft) attemptAppendEntries(id int, index int, args *AppendEntriesArgs)
 				rf.nextIndex[id] = lastValidIndex
 			}
 		} else {
-			/*if reply.XIndex < rf.nextIndex[id] && reply.Term >= args.Term {
-				rf.nextIndex[id] = reply.XLength - 1
-			}*/
 			rf.nextIndex[id] = 1
 		}
 
@@ -57,9 +51,6 @@ func (rf *Raft) attemptAppendEntries(id int, index int, args *AppendEntriesArgs)
 
 		entries := make([]LogEntry, len(rf.log)-rf.nextIndex[id])
 		copy(entries, rf.log[rf.nextIndex[id]:])
-		/*for i := rf.nextIndex[id]; i < len(rf.log); i++ {
-			entries = append(entries, rf.log[i])
-		}*/
 		retryArgs := AppendEntriesArgs{
 			Entries:      entries,
 			LeaderId:     rf.me,
@@ -73,7 +64,6 @@ func (rf *Raft) attemptAppendEntries(id int, index int, args *AppendEntriesArgs)
 	rf.setCommitIndex()
 }
 
-// expects calling code to hold a lock
 func (rf *Raft) getNumMatches(index int) int {
 	count := 1
 	for i, match := range rf.matchIndex {
@@ -88,8 +78,6 @@ func (rf *Raft) getNumMatches(index int) int {
 // Initialize all followers' nextIndex and matchIndex arrays
 //
 func (rf *Raft) initFollowerIndices() {
-	//rf.mu.Lock()
-	//defer rf.mu.Unlock()
 	for i, _ := range rf.peers {
 		rf.matchIndex[i] = 0
 		rf.nextIndex[i] = len(rf.log)
@@ -117,26 +105,18 @@ func (rf *Raft) sendHeartbeats() {
 			rf.mu.Lock()
 			defer rf.mu.Unlock()
 			rf.setTerm(reply.Term)
-			//rf.setCommitIndex()
 		}(i)
 	}
 }
 
 func (rf *Raft) setCommitIndex() {
-	//rf.mu.Lock()
-	//defer rf.mu.Unlock()
 	if rf.electionState != leader {
 		return
 	}
 	for i, _ := range rf.log {
 		if i > rf.commitIndex && rf.getNumMatches(i) >= rf.requiredReplies && rf.log[i].Term == rf.currentTerm {
-			prevCommit := rf.commitIndex
 			rf.commitIndex = i
 			rf.matchIndex[rf.me] = rf.commitIndex
-
-			DPrintf("********** LEADER COMMIT ********** term %d, %d setting commit index, prev commitIndex: %d, new commitIndex: %d", rf.currentTerm, rf.me, prevCommit, rf.commitIndex)
-			DPrintf("next: %+v", rf.nextIndex)
-			DPrintf("match: %+v", rf.matchIndex)
 		}
 	}
 	rf.applyCond.Broadcast()
@@ -150,10 +130,6 @@ func (rf *Raft) startLogConsensus(index int, term int) {
 		if len(rf.log)-1 >= followerIndex {
 			entries := make([]LogEntry, len(rf.log)-followerIndex)
 			copy(entries, rf.log[followerIndex:])
-			/*for i := followerIndex; i < len(rf.log); i++ {
-				entries = append(entries, rf.log[i])
-			}*/
-
 			args := AppendEntriesArgs{
 				Entries:      entries,
 				LeaderId:     rf.me,
@@ -168,7 +144,6 @@ func (rf *Raft) startLogConsensus(index int, term int) {
 	}
 }
 
-// Expects calling code to hold a lock
 func (rf *Raft) termInLog(term int) (bool, int) {
 	inLog := false
 	index := 1

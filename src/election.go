@@ -4,19 +4,14 @@ import "math/rand"
 import "time"
 
 func (rf *Raft) checkElectionState() {
-	//DPrintf("%d is a %v, checking time, votedFor: %d", rf.me, rf.electionState, rf.votedFor)
 	if rf.receivedHeartbeat {
 		rf.receivedHeartbeat = false
 		rf.electionState = follower
-		//rf.votedFor = -1
 		rf.resetElectionTimer()
 		rf.persist()
 	} else if rf.electionTimedOut() {
 		rf.resetElectionTimer()
-		DPrintf("---------------------------------------- %d's timer elapsed", rf.me)
-		if rf.votedFor == -1 || rf.votedFor == rf.me {
-			rf.startElection()
-		}
+		rf.startElection()
 	}
 }
 
@@ -43,7 +38,7 @@ func (rf *Raft) periodicallyCheckElectionState() {
 		if rf.electionState == leader {
 			rf.sendHeartbeats()
 		} else {
-			rf.checkElectionState() // synchronously, holding the lock here
+			rf.checkElectionState()
 		}
 	}
 }
@@ -67,8 +62,6 @@ func (rf *Raft) resetElectionTimer() {
 }
 
 func (rf *Raft) startElection() {
-	//rf.mu.Lock()
-	//defer rf.mu.Unlock()
 	me := rf.me
 	rf.currentTerm++
 	rf.electionState = candidate
@@ -76,7 +69,6 @@ func (rf *Raft) startElection() {
 	rf.resetElectionTimer()
 	rf.receivedHeartbeat = false
 	rf.persist()
-	DPrintf("---------------------------------------- %d is starting an election on term %d", rf.me, rf.currentTerm)
 	thisElectionStartTime := rf.electionStartTime
 	lastLogIndex := len(rf.log) - 1
 	lastLogTerm := rf.log[lastLogIndex].Term
@@ -114,22 +106,15 @@ func (rf *Raft) startElection() {
 		if newLeader {
 			rf.setTerm(newTerm)
 		}
-		DPrintf("---------------------------------------- %d waiting for votes", rf.me)
 	}
 
 	if thisElectionStartTime != rf.electionStartTime {
-		DPrintf("---------------------------------------- %d's election on term %d timed out", rf.me, term)
-		//rf.votedFor = -1
 		rf.persist()
 		return
 	}
 
 	if term == rf.currentTerm && rf.receivedMajorityVote(term, replies) {
-		DPrintf("---------------------------------------------------------- %d won election on term %d\n", me, rf.currentTerm)
-		DPrintf("---------------------------------------------------------- %d won term %d with replies %+v", rf.me, term, replies)
-		DPrintf("---------------------------------------------------------- %d's log: %+v", rf.me, rf.log)
 		rf.electionState = leader
-		//rf.votedFor = -1
 		rf.commitIndex = -1
 		rf.persist()
 		rf.initFollowerIndices()

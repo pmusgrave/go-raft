@@ -38,7 +38,6 @@ func (rf *Raft) readPersist(data []byte) {
 		rf.currentTerm = decodedTerm
 		rf.votedFor = decodedVotedFor
 		rf.log = decodedLog
-		//rf.setCommitIndex()
 		rf.initFollowerIndices()
 	}
 }

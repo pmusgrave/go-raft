@@ -14,11 +14,6 @@ type RequestVoteReply struct {
 
 func (rf *Raft) logUpToDate(lastLogIndex int, lastLogTerm int) bool {
 	myLastEntry := rf.log[len(rf.log)-1]
-	DPrintf("%d comparing: last entry at index %d %v, requester's last index %d last term %d", rf.me, len(rf.log)-1, myLastEntry, lastLogIndex, lastLogTerm)
-	DPrintf("%d's commitIndex %d", rf.me, rf.commitIndex)
-	if lastLogIndex < len(rf.log) {
-		DPrintf("requester last entry %+v", rf.log[lastLogIndex])
-	}
 	return lastLogTerm > myLastEntry.Term || (lastLogTerm == myLastEntry.Term && lastLogIndex >= len(rf.log)-1)
 }
 
@@ -28,9 +23,7 @@ func (rf *Raft) logUpToDate(lastLogIndex int, lastLogTerm int) bool {
 func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	rf.mu.Lock()
 	defer rf.mu.Unlock()
-	DPrintf("-------------------- %d received vote request %+v\n", rf.me, args)
-	DPrintf("-------------------- %d thinks it's term %d", rf.me, rf.currentTerm)
-	DPrintf("-------------------- %d votedFor %d", rf.me, rf.votedFor)
+
 	if args.Term > rf.currentTerm {
 		rf.currentTerm = rf.setTerm(args.Term)
 	}
@@ -46,9 +39,6 @@ func (rf *Raft) RequestVote(args *RequestVoteArgs, reply *RequestVoteReply) {
 	}
 
 	if reply.VoteGranted {
-		DPrintf("-------------------- %d is voting for %d", rf.me, args.CandidateId)
-		//rf.electionState = follower
-		rf.replyCond.Broadcast()
 		rf.votedFor = args.CandidateId
 		rf.resetElectionTimer()
 		rf.persist()

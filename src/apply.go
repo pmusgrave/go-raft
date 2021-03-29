@@ -17,21 +17,16 @@ type ApplyMsg struct {
 	CommandIndex int
 }
 
-//
-// Expects calling code to hold a lock
-//
-/*func (rf *Raft) apply(start int, stop int) {
-	for i := start; i < stop; i++ {
-		DPrintf("///////////////////////////////////////////////////////// %d sending apply message: index %d, command %d", rf.me, i, rf.log[i].Command)
-		msg := ApplyMsg{
-			CommandValid: true,
-			Command:      rf.log[i].Command,
-			CommandIndex: i,
-		}
-		rf.applyCh <- msg
-		rf.lastApplied = i
+func (rf *Raft) apply(index int) {
+	msg := ApplyMsg{
+		CommandValid: true,
+		Command:      rf.log[index].Command,
+		CommandIndex: index,
 	}
-        }*/
+	rf.mu.Unlock()
+	rf.applyCh <- msg
+	rf.mu.Lock()
+}
 
 func (rf *Raft) manageApply() {
 	rf.mu.Lock()
@@ -39,17 +34,7 @@ func (rf *Raft) manageApply() {
 	for !rf.killed() {
 		if rf.commitIndex > rf.lastApplied {
 			rf.lastApplied++
-			DPrintf("///////////////////////////////////////////////////////// %d sending apply message: index %d, command %d", rf.me, rf.lastApplied, rf.log[rf.lastApplied].Command)
-			msg := ApplyMsg{
-				CommandValid: true,
-				Command:      rf.log[rf.lastApplied].Command,
-				CommandIndex: rf.lastApplied,
-			}
-			rf.mu.Unlock()
-			rf.applyCh <- msg
-			rf.mu.Lock()
-			//rf.lastApplied = i
-			//rf.apply(rf.lastApplied, rf.commitIndex+1)
+			rf.apply(rf.lastApplied)
 		} else {
 			rf.applyCond.Wait()
 		}

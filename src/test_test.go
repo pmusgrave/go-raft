@@ -24,7 +24,7 @@ func TestInitialElection2A(t *testing.T) {
 	cfg := make_config(t, servers, false)
 	defer cfg.cleanup()
 
-	cfg.begin("Test (2A): initial election")
+	cfg.begin("Test (Leader Election): initial election")
 
 	// is a leader elected?
 	cfg.checkOneLeader()
@@ -55,7 +55,7 @@ func TestReElection2A(t *testing.T) {
 	cfg := make_config(t, servers, false)
 	defer cfg.cleanup()
 
-	cfg.begin("Test (2A): election after network failure")
+	cfg.begin("Test (Leader Election): election after network failure")
 
 	leader1 := cfg.checkOneLeader()
 
@@ -91,7 +91,7 @@ func TestBasicAgree2B(t *testing.T) {
 	cfg := make_config(t, servers, false)
 	defer cfg.cleanup()
 
-	cfg.begin("Test (2B): basic agreement")
+	cfg.begin("Test (Log Replication): basic agreement")
 
 	iters := 3
 	for index := 1; index < iters+1; index++ {
@@ -118,7 +118,7 @@ func TestRPCBytes2B(t *testing.T) {
 	cfg := make_config(t, servers, false)
 	defer cfg.cleanup()
 
-	cfg.begin("Test (2B): RPC byte count")
+	cfg.begin("Test (Log Replication): RPC byte count")
 
 	cfg.one(99, servers, false)
 	bytes0 := cfg.bytesTotal()
@@ -149,7 +149,7 @@ func TestFailAgree2B(t *testing.T) {
 	cfg := make_config(t, servers, false)
 	defer cfg.cleanup()
 
-	cfg.begin("Test (2B): agreement despite follower disconnection")
+	cfg.begin("Test (Log Replication): agreement despite follower disconnection")
 
 	cfg.one(101, servers, false)
 
@@ -183,7 +183,7 @@ func TestFailNoAgree2B(t *testing.T) {
 	cfg := make_config(t, servers, false)
 	defer cfg.cleanup()
 
-	cfg.begin("Test (2B): no agreement if too many followers disconnect")
+	cfg.begin("Test (Log Replication): no agreement if too many followers disconnect")
 
 	cfg.one(10, servers, false)
 
@@ -234,7 +234,7 @@ func TestConcurrentStarts2B(t *testing.T) {
 	cfg := make_config(t, servers, false)
 	defer cfg.cleanup()
 
-	cfg.begin("Test (2B): concurrent Start()s")
+	cfg.begin("Test (Log Replication): concurrent Start()s")
 
 	var success bool
 loop:
@@ -335,7 +335,7 @@ func TestRejoin2B(t *testing.T) {
 	cfg := make_config(t, servers, false)
 	defer cfg.cleanup()
 
-	cfg.begin("Test (2B): rejoin of partitioned leader")
+	cfg.begin("Test (Log Replication): rejoin of partitioned leader")
 
 	cfg.one(101, servers, true)
 
@@ -373,7 +373,7 @@ func TestBackup2B(t *testing.T) {
 	cfg := make_config(t, servers, false)
 	defer cfg.cleanup()
 
-	cfg.begin("Test (2B): leader backs up quickly over incorrect follower logs")
+	cfg.begin("Test (Log Replication): leader backs up quickly over incorrect follower logs")
 
 	cfg.one(rand.Int(), servers, true)
 
@@ -445,7 +445,7 @@ func TestCount2B(t *testing.T) {
 	cfg := make_config(t, servers, false)
 	defer cfg.cleanup()
 
-	cfg.begin("Test (2B): RPC counts aren't too high")
+	cfg.begin("Test (Log Replication): RPC counts aren't too high")
 
 	rpcs := func() (n int) {
 		for j := 0; j < servers; j++ {
@@ -555,7 +555,7 @@ func TestPersist12C(t *testing.T) {
 	cfg := make_config(t, servers, false)
 	defer cfg.cleanup()
 
-	cfg.begin("Test (2C): basic persistence")
+	cfg.begin("Test (Persistence): basic persistence")
 
 	cfg.one(11, servers, true)
 
@@ -601,7 +601,7 @@ func TestPersist22C(t *testing.T) {
 	cfg := make_config(t, servers, false)
 	defer cfg.cleanup()
 
-	cfg.begin("Test (2C): more persistence")
+	cfg.begin("Test (Persistence): more persistence")
 
 	index := 1
 	for iters := 0; iters < 5; iters++ {
@@ -647,7 +647,7 @@ func TestPersist32C(t *testing.T) {
 	cfg := make_config(t, servers, false)
 	defer cfg.cleanup()
 
-	cfg.begin("Test (2C): partitioned leader and one follower crash, leader restarts")
+	cfg.begin("Test (Persistence): partitioned leader and one follower crash, leader restarts")
 
 	cfg.one(101, 3, true)
 
@@ -687,7 +687,7 @@ func TestFigure82C(t *testing.T) {
 	cfg := make_config(t, servers, false)
 	defer cfg.cleanup()
 
-	cfg.begin("Test (2C): Figure 8")
+	cfg.begin("Test (Persistence): Figure 8")
 
 	cfg.one(rand.Int(), 1, true)
 
@@ -743,7 +743,7 @@ func TestUnreliableAgree2C(t *testing.T) {
 	cfg := make_config(t, servers, true)
 	defer cfg.cleanup()
 
-	cfg.begin("Test (2C): unreliable agreement")
+	cfg.begin("Test (Persistence): unreliable agreement")
 
 	var wg sync.WaitGroup
 
@@ -772,7 +772,7 @@ func TestFigure8Unreliable2C(t *testing.T) {
 	cfg := make_config(t, servers, true)
 	defer cfg.cleanup()
 
-	cfg.begin("Test (2C): Figure 8 (unreliable)")
+	cfg.begin("Test (Persistence): Figure 8 (unreliable)")
 
 	cfg.one(rand.Int()%10000, 1, true)
 
@@ -829,9 +829,9 @@ func internalChurn(t *testing.T, unreliable bool) {
 	defer cfg.cleanup()
 
 	if unreliable {
-		cfg.begin("Test (2C): unreliable churn")
+		cfg.begin("Test (Persistence): unreliable churn")
 	} else {
-		cfg.begin("Test (2C): churn")
+		cfg.begin("Test (Persistence): churn")
 	}
 
 	stop := int32(0)
